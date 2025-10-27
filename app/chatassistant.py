@@ -1,5 +1,7 @@
 # app/chatassistant.py
 import os
+import tempfile
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -25,8 +27,9 @@ if not supabase_url or not supabase_key:
     raise ValueError("❌ Supabase credentials not found. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your .env file.")
 
 # ---- CONFIG ----
-PDF_FOLDER = "./app/documents"
-VECTOR_DB_PATH = "./app/vector_store"
+# Use /tmp for temporary document storage (works on most systems including Render)
+PDF_FOLDER = os.path.join(tempfile.gettempdir(), "medchrono_documents")
+VECTOR_DB_PATH = os.path.join(tempfile.gettempdir(), "medchrono_vector_store")
 
 # ---- Initialize Supabase Client ----
 supabase: Client = create_client(supabase_url, supabase_key)
