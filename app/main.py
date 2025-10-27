@@ -43,6 +43,9 @@ async def process_single_document(file: UploadFile = File(...)):
     """
     Process a single uploaded document and return AI analysis.
     Accepts PDF, images (PNG, JPG, JPEG), and text files.
+
+    Note: Files are now uploaded directly to Supabase Storage,
+    so this endpoint is rarely used. Kept for backward compatibility.
     """
     # Validate file type
     allowed_extensions = {".pdf", ".png", ".jpg", ".jpeg", ".txt"}
