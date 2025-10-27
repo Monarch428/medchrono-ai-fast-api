@@ -141,8 +141,10 @@ def load_or_create_vectorstore_for_case(case_id: str, force_rebuild: bool = Fals
         # Query documents table for this case
         response = supabase.table("documents").select("*").eq("case_id", case_id).execute()
 
+        print(f"📋 Found {len(response.data) if response.data else 0} documents for case {case_id}")
+
         if not response.data or len(response.data) == 0:
-            print(f"⚠️ No documents found for case {case_id}")
+            print(f"⚠️ No documents found in database for case {case_id}")
             # Create empty vector store
             from langchain_core.documents import Document
             docs = [Document(
@@ -152,10 +154,13 @@ def load_or_create_vectorstore_for_case(case_id: str, force_rebuild: bool = Fals
         else:
             # Download and process each document
             docs = []
+            print(f"🔄 Processing {len(response.data)} documents...")
             for doc_record in response.data:
+                print(f"  - Document: {doc_record.get('filename', 'unknown')} (ID: {doc_record.get('id')})")
                 try:
                     # Download file from storage
                     if doc_record.get("storage_path"):
+                        print(f"    📥 Downloading from storage: {doc_record['storage_path']}")
                         file_data = supabase.storage.from_("documents").download(doc_record["storage_path"])
 
                         # Save temporarily and process
@@ -163,9 +168,12 @@ def load_or_create_vectorstore_for_case(case_id: str, force_rebuild: bool = Fals
                         temp_file.write(file_data)
                         temp_file.close()
 
+                        print(f"    📄 Loading PDF content...")
                         # Load PDF
                         loader = PyPDFLoader(temp_file.name)
                         loaded_docs = loader.load()
+
+                        print(f"    ✅ Loaded {len(loaded_docs)} pages")
 
                         # Add metadata
                         for d in loaded_docs:
@@ -177,10 +185,14 @@ def load_or_create_vectorstore_for_case(case_id: str, force_rebuild: bool = Fals
 
                         # Clean up temp file
                         os.unlink(temp_file.name)
-                        print(f"✅ Processed: {doc_record['filename']}")
+                        print(f"✅ Processed: {doc_record['filename']} ({len(loaded_docs)} pages)")
+                    else:
+                        print(f"    ⚠️ No storage_path for document: {doc_record.get('filename')}")
 
                 except Exception as e:
                     print(f"❌ Failed to process {doc_record.get('filename', 'unknown')}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
 
             if not docs:
                 print(f"⚠️ No documents could be processed for case {case_id}")
