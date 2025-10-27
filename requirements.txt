@@ -78,7 +78,6 @@ MarkupSafe==3.0.3
 marshmallow==3.26.1
 mdurl==0.1.2
 mypy_extensions==1.1.0
-numpy>=1.26.4,<2.0.0
 orjson==3.11.3
 packaging==25.0
 regex==2025.10.23
