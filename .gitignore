@@ -41,3 +41,5 @@ htmlcov/
 
 app/sample-output.json
 start.sh
+DEPLOYMENT_FIX.md
+QUICK_FIX.md

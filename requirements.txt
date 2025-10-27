@@ -24,6 +24,7 @@ uvloop==0.22.1
 starlette==0.48.0
 watchfiles==1.1.1
 typer==0.20.0
+python-multipart==0.0.20  # Required for file uploads in FastAPI
 
 # Supabase
 supabase>=2.22.1
