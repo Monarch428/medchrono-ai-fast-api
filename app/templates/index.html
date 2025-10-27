@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Case Document Summaries</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col items-stretch justify-start">
+
+  <div class="flex-1 w-full h-full p-4">
+    <h1 class="text-4xl font-bold mb-6 text-center text-gray-800">📑 Case Document Summaries</h1>
+
+    <div class="w-full h-[calc(100vh-120px)] overflow-auto shadow-lg rounded-2xl bg-white border border-gray-200">
+      <table class="min-w-full border-collapse border border-gray-200">
+        <thead class="bg-gray-100 text-gray-700 uppercase text-sm sticky top-0 z-10">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold">File Name</th>
+            <th class="px-4 py-2 text-left font-semibold">Report Type</th>
+            <th class="px-4 py-2 text-left font-semibold">Report Author</th>
+            <th class="px-4 py-2 text-left font-semibold">Issued By</th>
+            <th class="px-4 py-2 text-left font-semibold">Issued Date</th>
+            <th class="px-4 py-2 text-left font-semibold">Client/Subject Info</th>
+            <th class="px-4 py-2 text-left font-semibold">Key Complaints/Issues</th>
+            <th class="px-4 py-2 text-left font-semibold">Observations/Data</th>
+            <th class="px-4 py-2 text-left font-semibold">Actions Taken</th>
+            <th class="px-4 py-2 text-left font-semibold">Case Summary</th>
+            <th class="px-4 py-2 text-left font-semibold">Case Overview</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm text-gray-700">
+          {% for doc in data.documents %}
+          <tr class="border-b hover:bg-gray-50 transition-colors duration-200">
+            <td class="px-4 py-2">{{ doc.file_name }}</td>
+            <td class="px-4 py-2">{{ doc.report_type }}</td>
+            <td class="px-4 py-2">{{ doc.report_author }}</td>
+            <td class="px-4 py-2">{{ doc.issued_by }}</td>
+            <td class="px-4 py-2">{{ doc.issued_date }}</td>
+            <td class="px-4 py-2">{{ doc.client_or_subject_info or "Unknown" }}</td>
+            <td class="px-4 py-2">{{ doc.key_issues_or_complaints or "Unknown" }}</td>
+            <td class="px-4 py-2">{{ doc.observations_or_data or "Unknown" }}</td>
+            <td class="px-4 py-2">{{ doc.actions_taken or "Unknown" }}</td>
+            <td class="px-4 py-2">
+              {% if doc.case_summary_points %}
+                <ul class="list-disc pl-5 space-y-1">
+                  {% for point in doc.case_summary_points %}
+                    <li>{{ point }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <span class="text-gray-400 italic">No summary available</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2">{{ doc.case_overview or "Unknown" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>
