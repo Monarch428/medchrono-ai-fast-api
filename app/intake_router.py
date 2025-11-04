@@ -1,24 +1,23 @@
 # routers/intake_router.py
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import uuid
-import openai
 import json
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # -------------------------------
 # Load environment variables
 # -------------------------------
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter(prefix="/intake", tags=["Intake Bot"])
 
 # In-memory session store
 sessions = {}
-
 
 # -------------------------------
 # Data Models
@@ -38,40 +37,44 @@ class IntakeResponse(BaseModel):
 # -------------------------------
 # Helper Functions
 # -------------------------------
+def clean_json_response(text: str) -> str:
+    """Clean markdown or extra text around GPT JSON output."""
+    if "```" in text:
+        text = text.split("```json")[-1].split("```")[0]
+    return text.strip()
+
+
 def analyze_incident_with_gpt(conversation: list):
-    """
-    Send conversation history to GPT to analyze and decide:
-    - Next question
-    - Case or no case
-    - Summary
-    """
-    prompt = f"""
-    You are a legal intake assistant for MedChrono.
-    Based on the following conversation:
-    {conversation}
+    """Send conversation to GPT and extract structured info."""
+    messages = [{"role": "system", "content": "You are a helpful legal intake assistant for MedChrono."}]
+    for msg in conversation:
+        messages.append({"role": msg["role"], "content": msg["content"]})
 
-    Extract the following:
-    - incident_type
-    - location
-    - injury
-    - negligence
-    - evidence
-    - incident_date (if given)
-    - case_likelihood (High, Medium, Low)
-    - summary (2-3 lines)
-    - next_question (if intake not finished)
-    - finished (true if you have enough info)
-
-    Return valid JSON.
-    """
+    messages.append({
+        "role": "system",
+        "content": """
+        Based on the conversation, extract and return a JSON object with:
+        - incident_type
+        - location
+        - injury
+        - negligence
+        - evidence
+        - incident_date
+        - case_likelihood (High, Medium, Low)
+        - summary (2-3 lines)
+        - next_question
+        - finished (true/false)
+        Return ONLY valid JSON, without explanations or markdown.
+        """
+    })
 
     try:
-        completion = openai.ChatCompletion.create(
-            model="gpt-4o-mini",  # or "gpt-5"
-            messages=[{"role": "system", "content": prompt}],
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
             temperature=0.4
         )
-        return completion.choices[0].message["content"]
+        return completion.choices[0].message.content
     except Exception as e:
         return json.dumps({"error": str(e)})
 
@@ -86,15 +89,15 @@ async def respond_to_user(req: IntakeRequest):
     history.append({"role": "user", "content": req.user_message})
 
     gpt_result = analyze_incident_with_gpt(history)
+    # print("🔍 GPT RAW RESPONSE:", gpt_result)
 
     try:
-        result_data = json.loads(gpt_result)
+        cleaned = clean_json_response(gpt_result)
+        result_data = json.loads(cleaned)
     except json.JSONDecodeError:
+        print("⚠️ Invalid GPT output, using fallback.")
         result_data = {
-            "incident_type": None,
             "next_question": "Can you tell me more about what happened?",
-            "case_likelihood": "Unknown",
-            "summary": None,
             "finished": False
         }
 
@@ -108,12 +111,12 @@ async def respond_to_user(req: IntakeRequest):
             finished=True,
             summary=result_data
         )
-    else:
-        return IntakeResponse(
-            session_id=session_id,
-            bot_reply=result_data.get("next_question", "Can you tell me more?"),
-            finished=False
-        )
+
+    return IntakeResponse(
+        session_id=session_id,
+        bot_reply=result_data.get("next_question", "Can you tell me more?"),
+        finished=False
+    )
 
 
 @router.get("/summary/{session_id}")

@@ -35,7 +35,7 @@ supabase-auth>=2.22.1
 supabase-functions>=2.22.1
 
 # OpenAI + LangChain
-openai>=2.6.0
+openai>=1.51.0
 langchain>=0.3.79
 langchain-community>=0.3.31
 langchain-core>=0.3.79
