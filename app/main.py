@@ -11,6 +11,8 @@ from .subcategory import get_subcategories_from_ai
 from .document_processor import process_folder, process_file
 from .chatassistant import router as chat_router
 from .missing_reports import router as missing_router  # <-- Import missing_report router
+from app.intake_router import router as intake_router
+# from app.twilio_voice_router import router as twilio_voice_router
 
 app = FastAPI(title="Dynamic Case Subcategory API", version="1.0")
 
@@ -26,6 +28,8 @@ app.add_middleware(
 # ---- Include Routers ----
 app.include_router(chat_router)        # /chat
 app.include_router(missing_router)     # /missing_reports
+app.include_router(intake_router)        # /intake
+# app.include_router(twilio_voice_router)  # /voice
 
 @app.get("/")
 def root():
